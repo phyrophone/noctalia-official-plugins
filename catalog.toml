@@ -1,0 +1,20 @@
+# Official Noctalia plugins catalog.
+# Index of every plugin this source ships — the minimum needed to render, search,
+# and compat-check the list. The per-plugin plugin.toml stays authoritative; the
+# host re-reads it on enable. Keep one [[plugin]] row per plugin subdirectory.
+
+[[plugin]]
+id = "noctalia/example"
+name = "Example"
+version = "1.0.0"
+author = "noctalia"
+min_noctalia = "5.0.0"
+tags = ["example", "demo"]
+
+[[plugin]]
+id = "noctalia/screen_recorder"
+name = "Screen Recorder"
+version = "1.0.0"
+author = "noctalia"
+min_noctalia = "5.0.0"
+tags = ["recording", "screen", "video"]
