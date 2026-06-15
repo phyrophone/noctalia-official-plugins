@@ -139,6 +139,21 @@ local function buildResolutionFlag()
     return if res ~= "original" then `-s {res}` else ""
 end
 
+local function resolveVideoSource(errorTitle, focusedOutputName)
+    local source = cfg("video_source")
+    if source ~= "focused" then
+        return source
+    end
+
+    local monitor = focusedOutputName
+    if monitor == nil or monitor == "" then
+        noctalia.notifyError(errorTitle, "Could not detect focused monitor")
+        return nil
+    end
+
+    return monitor
+end
+
 local function buildGsrPrefix()
     return [[
 _gpuscreenrecorder_flatpak_installed() {
@@ -164,8 +179,9 @@ elif command -v flatpak >/dev/null 2>&1 && _gpuscreenrecorder_flatpak_installed;
   flatpak run --command=gpu-screen-recorder com.dec05eba.gpu_screen_recorder]]
 end
 
-local function buildRecordCommand()
-    local source = cfg("video_source")
+local function buildRecordCommand(focusedOutputName)
+    local source = resolveVideoSource("Recording failed", focusedOutputName)
+    if source == nil then return nil end
 
     local dir = outputDirectory()
 
@@ -187,8 +203,9 @@ local function buildRecordCommand()
     return `{buildGsrPrefix()} {flags}{buildGsrSuffix()} {flags}\nfi`
 end
 
-local function buildReplayCommand()
-    local source = cfg("video_source")
+local function buildReplayCommand(focusedOutputName)
+    local source = resolveVideoSource("Replay failed", focusedOutputName)
+    if source == nil then return nil end
 
     local dir = outputDirectory()
 
@@ -248,7 +265,7 @@ end
 
 -- ── Recording controls ───────────────────────────────────────────────────
 
-local function startRecording()
+local function startRecording(focusedOutputName)
     if not isAvailable or state ~= "idle" then return end
 
     setState("pending")
@@ -265,7 +282,7 @@ local function startRecording()
             return
         end
 
-        local cmd = buildRecordCommand()
+        local cmd = buildRecordCommand(focusedOutputName)
         if not cmd then
             setState("idle")
             updateDisplay()
@@ -296,7 +313,7 @@ end
 
 -- ── Replay controls ──────────────────────────────────────────────────────
 
-local function startReplay()
+local function startReplay(focusedOutputName)
     if not isAvailable or state ~= "idle" then return end
     if not cfg("replay_enabled") then return end
 
@@ -314,7 +331,7 @@ local function startReplay()
             return
         end
 
-        local cmd = buildReplayCommand()
+        local cmd = buildReplayCommand(focusedOutputName)
         if not cmd then
             setState("idle")
             updateDisplay()
@@ -426,25 +443,35 @@ function update()
 end
 
 function onIpc(event, payload)
+    local focusedOutputName = nil
+    if type(payload) == "table" then
+        focusedOutputName = payload.focusedOutputName
+    elseif type(payload) == "string" and payload ~= "" then
+        focusedOutputName = payload
+    end
+    if focusedOutputName == nil or focusedOutputName == "" then
+        focusedOutputName = noctalia.focusedOutputName()
+    end
+
     if event == "start" then
-        startRecording()
+        startRecording(focusedOutputName)
     elseif event == "stop" then
         stopRecording()
     elseif event == "toggle" then
         if table.find(RECORDING_STATES, state) then
             stopRecording()
         elseif state == "idle" then
-            startRecording()
+            startRecording(focusedOutputName)
         end
     elseif event == "replay-start" then
-        startReplay()
+        startReplay(focusedOutputName)
     elseif event == "replay-stop" then
         stopReplay()
     elseif event == "replay-toggle" then
         if table.find(REPLAY_STATES, state) then
             stopReplay()
         elseif state == "idle" then
-            startReplay()
+            startReplay(focusedOutputName)
         end
     elseif event == "replay-save" or event == "save-replay" then
         saveReplay()
@@ -457,6 +484,6 @@ end
 noctalia.state.watch("command", function(cmd)
     local action = if type(cmd) == "table" and cmd.action ~= nil then cmd.action else cmd
     if type(action) == "string" then
-        onIpc(action, nil)
+        onIpc(action, if type(cmd) == "table" then cmd else nil)
     end
 end)

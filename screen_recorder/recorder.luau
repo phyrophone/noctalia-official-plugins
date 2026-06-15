@@ -15,7 +15,7 @@ local RECORDING_STATES = { "recording", "pending" }
 local PENDING_STATES = { "pending", "replay_pending" }
 
 local function send(action)
-    noctalia.state.set("command", action)
+    noctalia.state.set("command", { action = action, focusedOutputName = noctalia.focusedOutputName() })
 end
 
 local function applyStatus(status)

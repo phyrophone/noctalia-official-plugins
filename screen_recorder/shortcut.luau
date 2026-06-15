@@ -32,9 +32,9 @@ applyStatus(noctalia.state.get("status"))
 noctalia.state.watch("status", applyStatus)
 
 function onClick()
-    noctalia.state.set("command", "toggle")
+    noctalia.state.set("command", { action = "toggle", focusedOutputName = noctalia.focusedOutputName() })
 end
 
 function onRightClick()
-    noctalia.state.set("command", "replay-toggle")
+    noctalia.state.set("command", { action = "replay-toggle", focusedOutputName = noctalia.focusedOutputName() })
 end
