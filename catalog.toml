@@ -57,3 +57,14 @@ icon = "clock"
 description = "A countdown timer desktop widget with start/pause and reset."
 min_noctalia = "5.0.0"
 tags = ["timer", "countdown", "desktop"]
+
+[[plugin]]
+id = "noctalia/wallhaven"
+name = "Wallhaven"
+version = "1.0.0"
+author = "noctalia"
+license = "MIT"
+icon = "photo"
+description = "Browse Wallhaven, download wallpapers, and apply them to the desktop."
+min_noctalia = "5.0.0"
+tags = ["wallpaper", "wallhaven", "panel"]
