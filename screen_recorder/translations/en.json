@@ -27,7 +27,7 @@
     },
     "directory": {
       "label": "Output directory",
-      "description": "Defaults to ~/Videos when empty"
+      "description": "Defaults to ~/Videos/Recordings when empty"
     },
     "filename_pattern": {
       "label": "Filename pattern",

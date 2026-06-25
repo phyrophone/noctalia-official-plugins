@@ -22,7 +22,7 @@ Install `gpu-screen-recorder` on `PATH`, or install the Flatpak app
 `xdg-desktop-portal-gnome`, or `xdg-desktop-portal-kde`.
 
 Recordings are saved to the configured output directory. When the directory is
-empty, the plugin uses `~/Videos`.
+empty, the plugin uses `~/Videos/Recordings`.
 
 ## Usage
 
@@ -52,7 +52,7 @@ Replay controls are available only when `replay_enabled` is true.
 | Setting | Type | Default | Description |
 | --- | --- | --- | --- |
 | `video_source` | `select` | `portal` | Capture `focused`, `portal`, or `region`. |
-| `directory` | `folder` | empty | Output folder, falling back to `~/Videos`. |
+| `directory` | `folder` | `~/Videos/Recordings` | Output folder, falling back to `~/Videos/Recordings`. |
 | `filename_pattern` | `string` | `recording_%Y%m%d_%H%M%S` | Date-format filename pattern without extension. |
 | `frame_rate` | `int` | `60` | Capture frame rate from 1 to 240. |
 | `video_codec` | `select` | `h264` | Video codec: `h264`, `hevc`, `av1`, `vp8`, or `vp9`. |

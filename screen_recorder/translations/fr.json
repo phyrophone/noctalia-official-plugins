@@ -27,7 +27,7 @@
     },
     "directory": {
       "label": "Dossier de sortie",
-      "description": "Utilise ~/Videos par défaut lorsque vide"
+      "description": "Utilise ~/Videos/Recordings par défaut lorsque vide"
     },
     "filename_pattern": {
       "label": "Modèle de nom de fichier",

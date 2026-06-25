@@ -165,7 +165,7 @@ end
 
 local function outputDirectory()
     local configured = cfg("directory")
-    local dir = if configured == "" then `{noctalia.getenv("HOME") or "/tmp"}/Videos` else noctalia.expandPath(configured)
+    local dir = if configured == "" then noctalia.expandPath("~/Videos/Recordings") else noctalia.expandPath(configured)
     if dir:sub(-1) ~= "/" then
         dir ..= "/"
     end

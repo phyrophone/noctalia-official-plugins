@@ -12,7 +12,7 @@
 
 id = "noctalia/screen_recorder"
 name = "Screen Recorder"
-version = "1.1.6"
+version = "1.1.7"
 min_noctalia = "5.0.0"
 author = "noctalia"
 license = "MIT"
@@ -37,6 +37,7 @@ options = [
 key = "directory"
 type = "folder"
 label_key = "settings.directory.label"
+default = "~/Videos/Recordings"
 description_key = "settings.directory.description"
 
 [[setting]]
