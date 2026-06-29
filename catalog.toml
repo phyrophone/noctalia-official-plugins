@@ -41,7 +41,7 @@ tags = ["fun", "animation"]
 [[plugin]]
 id = "noctalia/translator"
 name = "Translator"
-version = "1.0.4"
+version = "1.0.5"
 author = "noctalia"
 license = "MIT"
 icon = "language"
