@@ -20,7 +20,10 @@
 --   bc=idle, dc=left slap, ba=right slap, da=both slap
 --   ef=sleep, gh=blink
 
-barWidget.setFont("fonts/bongocat.otf")
+local bongocatFont = noctalia.loadFont("fonts/bongocat.otf")
+if bongocatFont then
+  barWidget.setFont(bongocatFont, "pictographic")
+end
 barWidget.setText("bc")
 noctalia.setUpdateInterval(50)
 
