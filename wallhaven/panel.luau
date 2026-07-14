@@ -180,9 +180,19 @@ local function resolutionModeLabelList()
   }
 end
 
+local function parsePositiveInt(s)
+  local n = tonumber(s)
+  if n == nil or n < 1 or math.floor(n) ~= n then
+    return nil
+  end
+  return n
+end
+
 local function buildResolutionParam()
-  if resolutionWidth ~= "" and resolutionHeight ~= "" then
-    local resolution = resolutionWidth .. "x" .. resolutionHeight
+  local w = parsePositiveInt(resolutionWidth)
+  local h = parsePositiveInt(resolutionHeight)
+  if w ~= nil and h ~= nil then
+    local resolution = tostring(w) .. "x" .. tostring(h)
     if resolutionMode == "atleast" then
       return "atleast", resolution
     else
@@ -274,6 +284,7 @@ local function filtersPanel()
           placeholder = tr("resolution_width_placeholder"),
           value = resolutionWidth,
           onChange = "onResolutionWidthChange",
+					onSubmit = "onResolutionWidthSubmit",
           flexGrow = 1,
         }),
         ui.label({
@@ -286,6 +297,7 @@ local function filtersPanel()
           placeholder = tr("resolution_height_placeholder"),
           value = resolutionHeight,
           onChange = "onResolutionHeightChange",
+					onSubmit = "onResolutionHeightSubmit",
           flexGrow = 1,
         }),
       }), 1),
@@ -753,12 +765,29 @@ end
 
 function onResolutionWidthChange(value)
   resolutionWidth = noctalia.string.trim(value)
-  persistAndRefetch()
 end
 
 function onResolutionHeightChange(value)
   resolutionHeight = noctalia.string.trim(value)
-  persistAndRefetch()
+end
+
+function handleResolutionSubmit(value, isWidth)
+  local trimmedValue = noctalia.string.trim(value)
+  if isWidth then
+    resolutionWidth = trimmedValue
+  else
+    resolutionHeight = trimmedValue
+  end
+  page = 1
+  fetchWallpapers()
+end
+
+function onResolutionWidthSubmit(value)
+  handleResolutionSubmit(value, true)
+end
+
+function onResolutionHeightSubmit(value)
+  handleResolutionSubmit(value, false)
 end
 
 function onAspectRatioChange(index, _text)
@@ -767,9 +796,10 @@ function onAspectRatioChange(index, _text)
 end
 
 function onClearResolution()
-  if resolutionWidth == "" and resolutionHeight == "" then
+  if resolutionMode == "atleast" and resolutionWidth == "" and resolutionHeight == "" then
     return
   end
+	resolutionMode = "atleast"
   resolutionWidth = ""
   resolutionHeight = ""
   clearCounter += 1
