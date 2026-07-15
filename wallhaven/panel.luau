@@ -35,6 +35,12 @@ local categoryGeneral = true
 local categoryAnime = true
 local categoryPeople = true
 
+local resolutionMode = "atleast" -- "atleast" or "exact"
+local resolutionWidth = ""
+local resolutionHeight = ""
+local aspectRatioIndex = 0
+local clearCounter = 0
+
 local thumbPaths = {} -- id -> cache file path
 local thumbPending = {} -- id -> true while downloading
 local thumbQueue = {} -- wallpapers waiting for a download slot
@@ -45,8 +51,9 @@ local render
 local fetchWallpapers
 local applyWallpaper
 
-local sortOptions = { "date_added", "relevance", "views", "favorites", "random" }
+local sortOptions = { "relevance", "random", "date_added", "views", "favorites", "toplist", "hot" }
 local sortIndex = 0
+local sortOrder = "desc"
 
 local function tr(key)
   return noctalia.tr(key)
@@ -54,11 +61,13 @@ end
 
 local function sortLabelList()
   return {
-    tr("sort.options.date_added"),
     tr("sort.options.relevance"),
+    tr("sort.options.random"),
+    tr("sort.options.date_added"),
     tr("sort.options.views"),
     tr("sort.options.favorites"),
-    tr("sort.options.random"),
+    tr("sort.options.toplist"),
+    tr("sort.options.hot")
   }
 end
 
@@ -122,6 +131,88 @@ local function sortValue()
   return sortOptions[sortIndex + 1] or "date_added"
 end
 
+local function aspectRatioOptions()
+  return {
+    "",
+    "wide",
+    "portrait",
+    "16x9",
+    "16x10",
+    "21x9",
+    "32x9",
+    "48x9",
+    "9x16",
+    "10x16",
+    "9x18",
+    "1x1",
+    "3x2",
+    "4x3",
+    "5x4",
+  }
+end
+
+local function aspectRatioLabelList()
+  return {
+    tr("ratio_any"),
+    tr("ratio_wide"),
+    tr("ratio_portrait"),
+    "16x9",
+    "16x10",
+    "21x9",
+    "32x9",
+    "48x9",
+    "9x16",
+    "10x16",
+    "9x18",
+    "1x1",
+    "3x2",
+    "4x3",
+    "5x4",
+  }
+end
+
+local function resolutionModeOptions()
+  return { "atleast", "exact" }
+end
+
+local function resolutionModeLabelList()
+  return {
+    tr("resolution_mode_atleast"),
+    tr("resolution_mode_exact"),
+  }
+end
+
+local function parsePositiveInt(s)
+  local n = tonumber(s)
+  if n == nil or n < 1 or math.floor(n) ~= n then
+    return nil
+  end
+  return n
+end
+
+local function buildResolutionParam()
+  local w = parsePositiveInt(resolutionWidth)
+  local h = parsePositiveInt(resolutionHeight)
+  if w ~= nil and h ~= nil then
+    local resolution = tostring(w) .. "x" .. tostring(h)
+    if resolutionMode == "atleast" then
+      return "atleast", resolution
+    else
+      return "resolutions", resolution
+    end
+  end
+  return nil, nil
+end
+
+local function buildAspectRatioParam()
+  local ratios = aspectRatioOptions()
+  local ratio = ratios[aspectRatioIndex + 1] or ""
+  if ratio ~= "" then
+    return ratio
+  end
+  return nil
+end
+
 local function filterChip(label, active, onClick, key, enabled)
   return ui.button({
     key = key,
@@ -132,8 +223,8 @@ local function filterChip(label, active, onClick, key, enabled)
   })
 end
 
-local function filterGroup(title, content)
-  return ui.row({ gap = 6, align = "center" }, {
+local function filterGroup(title, content, flexGrow)
+  return ui.row({ gap = 6, align = "center", flexGrow = flexGrow }, {
     ui.label({
       text = title,
       fontSize = 12,
@@ -144,29 +235,80 @@ local function filterGroup(title, content)
 end
 
 local function filtersPanel()
-  return ui.row({ gap = 16, align = "center" }, {
-    filterGroup(tr("filter_categories"), ui.row({ gap = 6, align = "center" }, {
-      filterChip(tr("category_general"), categoryGeneral, "onCategoryGeneral", "filter_cat_general"),
-      filterChip(tr("category_anime"), categoryAnime, "onCategoryAnime", "filter_cat_anime"),
-      filterChip(tr("category_people"), categoryPeople, "onCategoryPeople", "filter_cat_people"),
-    })),
-    filterGroup(tr("filter_purity"), ui.row({ gap = 6, align = "center" }, {
-      filterChip(tr("purity_sfw"), puritySfw, "onPuritySfw", "filter_purity_sfw"),
-      filterChip(tr("purity_sketchy"), puritySketchy, "onPuritySketchy", "filter_purity_sketchy"),
-      filterChip(tr("purity_nsfw"), purityNsfw, "onPurityNsfw", "filter_purity_nsfw", nsfwAllowed()),
-    })),
-    ui.row({ gap = 6, align = "center", flexGrow = 1 }, {
-      ui.label({
-        text = tr("filter_sort"),
-        fontSize = 12,
-        color = "on_surface_variant",
-      }),
-      ui.select({
-        key = "sort",
-        options = sortLabelList(),
-        selectedIndex = sortIndex,
-        onChange = "onSort",
-        flexGrow = 1,
+  return ui.column({ gap = 12, align = "stretch" }, {
+    ui.row({ gap = 16, align = "center" }, {
+      filterGroup(tr("filter_categories"), ui.row({ gap = 6, align = "center" }, {
+        filterChip(tr("category_general"), categoryGeneral, "onCategoryGeneral", "filter_cat_general"),
+        filterChip(tr("category_anime"), categoryAnime, "onCategoryAnime", "filter_cat_anime"),
+        filterChip(tr("category_people"), categoryPeople, "onCategoryPeople", "filter_cat_people"),
+      })),
+      filterGroup(tr("filter_purity"), ui.row({ gap = 6, align = "center" }, {
+        filterChip(tr("purity_sfw"), puritySfw, "onPuritySfw", "filter_purity_sfw"),
+        filterChip(tr("purity_sketchy"), puritySketchy, "onPuritySketchy", "filter_purity_sketchy"),
+        filterChip(tr("purity_nsfw"), purityNsfw, "onPurityNsfw", "filter_purity_nsfw", nsfwAllowed()),
+      })),
+      filterGroup(tr("filter_sort"), ui.row({ gap = 4, align = "center", flexGrow = 1 }, {
+        ui.select({
+          key = "sort",
+          options = sortLabelList(),
+          selectedIndex = sortIndex,
+          onChange = "onSort",
+          flexGrow = 1,
+        }),
+        ui.button({
+          key = "sort_order",
+          glyph = if sortOrder == "desc" then "arrow-down" else "arrow-up",
+					tooltip = if sortOrder == "desc" then tr("sort_desc") else tr("sort_asc"),
+          variant = "outline",
+          onClick = "onToggleSortOrder",
+        }),
+      }), 1),
+    }),
+    ui.row({ gap = 12, align = "center" }, {
+      filterGroup(tr("filter_aspect_ratio"), ui.row({ flexGrow = 0 }, {
+        ui.select({
+          key = "aspect_ratio",
+          options = aspectRatioLabelList(),
+          selectedIndex = aspectRatioIndex,
+          onChange = "onAspectRatioChange",
+          width = 260,
+        })
+      })),
+      filterGroup(tr("filter_resolution"), ui.row({ gap = 8, align = "center", flexGrow = 1 }, {
+        ui.select({
+          key = "resolution_mode",
+          options = resolutionModeLabelList(),
+          selectedIndex = if resolutionMode == "exact" then 1 else 0,
+          onChange = "onResolutionModeChange",
+          width = 180,
+        }),
+        ui.input({
+          key = `resolution_width_{clearCounter}`,
+          placeholder = tr("resolution_width_placeholder"),
+          value = resolutionWidth,
+          onChange = "onResolutionWidthChange",
+          onSubmit = "onResolutionWidthSubmit",
+          flexGrow = 1,
+        }),
+        ui.label({
+          text = "×",
+          fontSize = 14,
+          color = "on_surface_variant",
+        }),
+        ui.input({
+          key = `resolution_height_{clearCounter}`,
+          placeholder = tr("resolution_height_placeholder"),
+          value = resolutionHeight,
+          onChange = "onResolutionHeightChange",
+          onSubmit = "onResolutionHeightSubmit",
+          flexGrow = 1,
+        }),
+      }), 1),
+      ui.button({
+        key = "clear_resolution",
+        text = tr("clear_resolution"),
+        variant = "destructive",
+        onClick = "onClearResolution",
       }),
     }),
   })
@@ -340,12 +482,24 @@ fetchWallpapers = function()
     `purity={buildPurity()}`,
     `page={page}`,
     `sorting={sortValue()}`,
-    "order=desc",
+    `order={sortOrder}`,
   }
+  
   local trimmed = noctalia.string.trim(query)
   if trimmed ~= "" then
     table.insert(params, `q={noctalia.string.urlEncode(trimmed)}`)
   end
+  
+  local resolutionParamName, resolutionValue = buildResolutionParam()
+  if resolutionParamName ~= nil and resolutionValue ~= nil then
+    table.insert(params, `{resolutionParamName}={resolutionValue}`)
+  end
+  
+  local aspectRatio = buildAspectRatioParam()
+  if aspectRatio ~= nil then
+    table.insert(params, `ratios={aspectRatio}`)
+  end
+  
   local url = API_BASE .. "/search?" .. table.concat(params, "&")
 
   noctalia.http({ url = url, headers = httpHeaders() }, function(res)
@@ -598,6 +752,60 @@ end
 
 function onSort(index, _text)
   sortIndex = tonumber(index) or 0
+  persistAndRefetch()
+end
+
+function onToggleSortOrder()
+  sortOrder = if sortOrder == "desc" then "asc" else "desc"
+  persistAndRefetch()
+end
+
+function onResolutionModeChange(index, _text)
+  local modes = resolutionModeOptions()
+  resolutionMode = modes[(tonumber(index) or 0) + 1] or "atleast"
+  persistAndRefetch()
+end
+
+function onResolutionWidthChange(value)
+  resolutionWidth = noctalia.string.trim(value)
+end
+
+function onResolutionHeightChange(value)
+  resolutionHeight = noctalia.string.trim(value)
+end
+
+function handleResolutionSubmit(value, isWidth)
+  local trimmedValue = noctalia.string.trim(value)
+  if isWidth then
+    resolutionWidth = trimmedValue
+  else
+    resolutionHeight = trimmedValue
+  end
+  page = 1
+  fetchWallpapers()
+end
+
+function onResolutionWidthSubmit(value)
+  handleResolutionSubmit(value, true)
+end
+
+function onResolutionHeightSubmit(value)
+  handleResolutionSubmit(value, false)
+end
+
+function onAspectRatioChange(index, _text)
+  aspectRatioIndex = tonumber(index) or 0
+  persistAndRefetch()
+end
+
+function onClearResolution()
+  if resolutionMode == "atleast" and resolutionWidth == "" and resolutionHeight == "" then
+    return
+  end
+  resolutionMode = "atleast"
+  resolutionWidth = ""
+  resolutionHeight = ""
+  clearCounter += 1
   persistAndRefetch()
 end
 
