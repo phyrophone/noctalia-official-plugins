@@ -10,7 +10,7 @@
 
 id = "noctalia/mpvpaper"
 name = "Video Wallpaper"
-version = "1.0.4"
+version = "1.0.5"
 min_noctalia = "5.0.0"
 author = "noctalia"
 license = "MIT"
