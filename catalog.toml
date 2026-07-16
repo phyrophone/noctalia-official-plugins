@@ -8,11 +8,11 @@
 [[plugin]]
 id = "noctalia/example"
 name = "Example"
-version = "1.2.1"
+version = "1.2.2"
 author = "noctalia"
 license = "MIT"
 icon = "puzzle"
-description = "A minimal reference plugin: a bar widget with settings and IPC, a declarative bar widget (barWidget.render), a service, a shortcut, a launcher provider using setQuery, and a panel of interactive controls."
+description = "A reference plugin demonstrating every supported entry type and common runtime APIs."
 min_noctalia = "5.0.0"
 tags = ["demo"]
 
