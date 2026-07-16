@@ -13,6 +13,7 @@ from typing import Any
 
 DEFAULT_ROOT = Path(__file__).resolve().parents[2]
 SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+$")
+DESCRIPTION_MAX_CHARS = 120
 
 ROOT_STRING_FIELDS = (
     "id",
@@ -202,6 +203,18 @@ class Validator:
                 self.add_context_error(manifest_path, context, f"{field} contains duplicate '{item}'")
             seen.add(item)
 
+    def validate_description(self, manifest_path: Path, value: Any) -> None:
+        if not is_non_empty_string(value):
+            return
+
+        length = len(value)
+        if length > DESCRIPTION_MAX_CHARS:
+            self.add_error(
+                manifest_path,
+                f"root field 'description' is {length} characters; "
+                f"keep catalog descriptions at or below {DESCRIPTION_MAX_CHARS}",
+            )
+
     def validate_root_fields(self, manifest_path: Path, manifest: dict[str, Any]) -> None:
         unknown = sorted(set(manifest) - ROOT_FIELDS)
         for field in unknown:
@@ -228,6 +241,9 @@ class Validator:
 
         if "tags" in manifest:
             self.validate_string_list(manifest_path, "root", "tags", manifest["tags"], allow_empty=False)
+
+        if "description" in manifest:
+            self.validate_description(manifest_path, manifest["description"])
 
         if "deprecated" in manifest and not isinstance(manifest["deprecated"], bool):
             self.add_error(manifest_path, "root field 'deprecated' must be a bool")
