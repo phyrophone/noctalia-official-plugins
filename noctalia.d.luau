@@ -57,7 +57,7 @@ export type Output = {
   focused: boolean,
 }
 
--- A tooltip row: { key, value } or the positional array form { key, value }.
+--- A tooltip row: { key, value } or the positional array form { key, value }.
 export type TooltipRow = { key: string?, value: string? }
 
 export type LauncherResult = {
@@ -97,8 +97,8 @@ export type Noctalia = {
 
   -- Subprocess
   --- With no callback, runAsync is a detached fire-and-forget launch.
-  --- With a callback it runs async and delivers a CommandResult; timeoutMs is
-  --- clamped to [50, 60000].
+  --- With a callback it runs async and delivers a CommandResult;
+  --- @param timeoutMs clamped to [50, 60000].
   runAsync: (cmd: string, onResult: ((result: CommandResult) -> ())?, timeoutMs: number?) -> boolean,
   runStream: (cmd: string, onLine: (line: string) -> ()) -> boolean,
   runInTerminal: (cmd: string) -> boolean,
@@ -117,8 +117,9 @@ export type Noctalia = {
   -- App icons.
   --- Resolves an app id (desktop-entry id / StartupWMClass) — or a
   --- raw icon name when no entry matches — to an icon file path via the host's
-  --- XDG icon-theme resolver, for use with ui.image. sizePx is the intended
-  --- on-screen pixel size; nil when nothing resolves.
+  --- XDG icon-theme resolver, for use with ui.image.
+  --- @param sizePx the intended on-screen pixel size
+  --- @return `nil` when nothing resolves.
   appIconPath: (appIdOrIconName: string, sizePx: number?) -> string?,
 
   -- Wallpaper
@@ -129,7 +130,8 @@ export type Noctalia = {
   wallpaperDirectory: () -> string?,
 
   -- Panels.
-  togglePanel: (panelId: string) -> (), -- "author/plugin:panel"
+  --- @param panelId "author/plugin:panel"
+  togglePanel: (panelId: string) -> (), 
 
   -- Dialogs
   --- The callback receives the selected canonical #RRGGBB color, or nil
@@ -151,7 +153,8 @@ export type Noctalia = {
   setUpdateInterval: (ms: number) -> (),
 
   -- Filesystem (paths resolve ~ -> $HOME, absolute verbatim, else plugin-relative).
-  --- contents, or (nil, err)
+  --- @return contents
+  --- @return or (nil, err)
   readFile: (path: string) -> (string?, string?),
   writeFile: (path: string, contents: string) -> (boolean, string?),
   --- like mkdir -p; existing dir is success
@@ -165,12 +168,15 @@ export type Noctalia = {
   pluginDir: () -> string?,
   --- Per-plugin persistent data dir, created on demand. Survives plugin updates
   --- and honors the NOCTALIA_STATE_HOME override. Use for durable data (state is
-  --- in-memory only). Returns the absolute path, or (nil, err).
+  --- in-memory only). 
+  --- @return absolute path
+  --- @return or (nil, err).
   pluginDataDir: () -> (string?, string?),
 
   --- Register a font file (path resolves like readFile) so its family becomes
-  --- usable in setFont / a ui label's fontFamily. Returns the family name, or
-  --- (nil, err). The family is visible to every surface once loaded.
+  --- usable in setFont / a ui label's fontFamily.
+  --- @return The family name, is visible to every surface once loaded.
+  --- @return or (nil, err).
   loadFont: (path: string) -> (string?, string?),
 
   --- Translation against the plugin's own translations/<lang>.json.
@@ -183,8 +189,8 @@ export type Noctalia = {
   --- trimmed); onClose fires exactly once when the transfer ends, unless the
   --- stream was stopped via the handle. Non-2xx responses are not special-cased:
   --- their body streams to onLine and the status arrives in onClose. Streams are
-  --- cancelled on script reload. Requires plugin_api >= 4. Returns nil when the
-  --- stream could not be started.
+  --- cancelled on script reload. Requires plugin_api >= 4.
+  --- @return Returns nil when the stream could not be started.
   httpStream: (
     req: HttpRequest,
     onLine: (line: string) -> (),
@@ -192,10 +198,11 @@ export type Noctalia = {
   ) -> HttpStreamHandle?,
   download: (url: string, destPath: string, onDone: (success: boolean) -> ()) -> boolean,
 
-  --- returns nil if no match
+  --- @return returns nil if no match
   fuzzyScore: (pattern: string, text: string) -> number?,
 
-  getConfig: (key: string) -> any, -- string | number | boolean | {string} | nil
+  --- @return string | number | boolean | {string} | nil
+  getConfig: (key: string) -> any,
 
   state: NoctaliaState,
   json: NoctaliaJson,
@@ -226,8 +233,8 @@ declare barWidget: {
   setColor: (role: string, mode: string?) -> (),
   setGlyphColor: (role: string, mode: string?) -> (),
   isVertical: () -> boolean,
-  --- Connector name of the output this widget instance's bar is on (nil when
-  --- unknown). Per-instance, unlike noctalia.focusedOutputName().
+  --- Per-instance, unlike noctalia.focusedOutputName().
+  --- @return Connector name of the output this widget instance's bar is on (nil when unknown).
   outputName: () -> string?,
   setVisible: (visible: boolean) -> (),
   --- Declarative alternative to setText/setGlyph: the tree replaces the built-in
