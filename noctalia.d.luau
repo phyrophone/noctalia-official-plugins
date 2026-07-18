@@ -95,15 +95,16 @@ export type NoctaliaString = {
 export type Noctalia = {
   log: (msg: string) -> (),
 
-  -- Subprocess. With no callback, runAsync is a detached fire-and-forget launch.
-  -- With a callback it runs async and delivers a CommandResult; timeoutMs is
-  -- clamped to [50, 60000].
+  -- Subprocess
+  --- With no callback, runAsync is a detached fire-and-forget launch.
+  --- With a callback it runs async and delivers a CommandResult; timeoutMs is
+  --- clamped to [50, 60000].
   runAsync: (cmd: string, onResult: ((result: CommandResult) -> ())?, timeoutMs: number?) -> boolean,
   runStream: (cmd: string, onLine: (line: string) -> ()) -> boolean,
   runInTerminal: (cmd: string) -> boolean,
   commandExists: (name: string) -> boolean,
-  -- processMatches(onResult, needle1, needle2, …) — onResult(true) iff a running
-  -- process command line matches all needles.
+  --- processMatches(onResult, needle1, needle2, …) — onResult(true) if a running
+  --- process command line matches all needles.
   processMatches: (onResult: (matched: boolean) -> (), ...string) -> boolean,
   flatpakAppInstalled: (appId: string) -> boolean,
   portalAvailable: () -> boolean,
@@ -113,23 +114,26 @@ export type Noctalia = {
   outputs: () -> { Output },
   isDarkMode: () -> boolean,
 
-  -- App icons. Resolves an app id (desktop-entry id / StartupWMClass) — or a
-  -- raw icon name when no entry matches — to an icon file path via the host's
-  -- XDG icon-theme resolver, for use with ui.image. sizePx is the intended
-  -- on-screen pixel size; nil when nothing resolves.
+  -- App icons.
+  --- Resolves an app id (desktop-entry id / StartupWMClass) — or a
+  --- raw icon name when no entry matches — to an icon file path via the host's
+  --- XDG icon-theme resolver, for use with ui.image. sizePx is the intended
+  --- on-screen pixel size; nil when nothing resolves.
   appIconPath: (appIdOrIconName: string, sizePx: number?) -> string?,
 
-  -- Wallpaper. setWallpaper(path) targets all outputs; setWallpaper(connector,
-  -- path) targets one.
+  -- Wallpaper
   setWallpaperEnabled: (connector: string, enabled: boolean) -> (),
+  --- setWallpaper(path) targets all outputs; setWallpaper(connector,
+  --- path) targets one.
   setWallpaper: (connectorOrPath: string, path: string?) -> (),
   wallpaperDirectory: () -> string?,
 
   -- Panels.
   togglePanel: (panelId: string) -> (), -- "author/plugin:panel"
 
-  -- Dialogs. The callback receives the selected canonical #RRGGBB color, or nil
-  -- when the dialog is cancelled.
+  -- Dialogs
+  --- The callback receives the selected canonical #RRGGBB color, or nil
+  --- when the dialog is cancelled.
   openColorPicker: (initialColor: string, onClose: (color: string?) -> ()) -> boolean,
 
   -- Notifications.
@@ -137,46 +141,50 @@ export type Noctalia = {
   notifyError: (title: string, body: string?) -> (),
 
   copyToClipboard: (text: string, mimeType: string) -> boolean,
-  clipboardText: () -> string?, -- latest text clipboard content (nil when empty or non-text)
+  --- latest text clipboard content (nil when empty or non-text)
+  clipboardText: () -> string?,
   getenv: (name: string) -> string?,
   expandPath: (path: string) -> string,
   formatTime: (pattern: string, unixSeconds: number?) -> string,
 
-  -- Tick rate: how often update() fires (clamped to >= 16ms).
+  --- Tick rate: how often update() fires (clamped to >= 16ms).
   setUpdateInterval: (ms: number) -> (),
 
   -- Filesystem (paths resolve ~ -> $HOME, absolute verbatim, else plugin-relative).
-  readFile: (path: string) -> (string?, string?), -- contents, or (nil, err)
+  --- contents, or (nil, err)
+  readFile: (path: string) -> (string?, string?),
   writeFile: (path: string, contents: string) -> (boolean, string?),
-  mkdirAll: (path: string) -> (boolean, string?), -- like mkdir -p; existing dir is success
-  removeFile: (path: string) -> (boolean, string?), -- files only, refuses directories
+  --- like mkdir -p; existing dir is success
+  mkdirAll: (path: string) -> (boolean, string?),
+  --- files only, refuses directories
+  removeFile: (path: string) -> (boolean, string?),
   renameFile: (from: string, to: string) -> (boolean, string?),
   fileExists: (path: string) -> boolean,
   fileInfo: (path: string) -> ({ size: number, mtime: number, isDir: boolean }?, string?),
   listDir: (path: string) -> ({ string }?, string?),
   pluginDir: () -> string?,
-  -- Per-plugin persistent data dir, created on demand. Survives plugin updates
-  -- and honors the NOCTALIA_STATE_HOME override. Use for durable data (state is
-  -- in-memory only). Returns the absolute path, or (nil, err).
+  --- Per-plugin persistent data dir, created on demand. Survives plugin updates
+  --- and honors the NOCTALIA_STATE_HOME override. Use for durable data (state is
+  --- in-memory only). Returns the absolute path, or (nil, err).
   pluginDataDir: () -> (string?, string?),
 
-  -- Register a font file (path resolves like readFile) so its family becomes
-  -- usable in setFont / a ui label's fontFamily. Returns the family name, or
-  -- (nil, err). The family is visible to every surface once loaded.
+  --- Register a font file (path resolves like readFile) so its family becomes
+  --- usable in setFont / a ui label's fontFamily. Returns the family name, or
+  --- (nil, err). The family is visible to every surface once loaded.
   loadFont: (path: string) -> (string?, string?),
 
-  -- Translation against the plugin's own translations/<lang>.json.
+  --- Translation against the plugin's own translations/<lang>.json.
   tr: (key: string, subst: { [string]: string | number | boolean }?) -> string,
   trp: (key: string, count: number, subst: { [string]: string | number | boolean }?) -> string,
 
   -- HTTP (honors shell.offline_mode; download dest resolves like readFile).
   http: (req: HttpRequest, onResponse: (response: HttpResponse) -> ()) -> boolean,
-  -- Long-lived streaming request (e.g. SSE). onLine fires per received line (CR
-  -- trimmed); onClose fires exactly once when the transfer ends, unless the
-  -- stream was stopped via the handle. Non-2xx responses are not special-cased:
-  -- their body streams to onLine and the status arrives in onClose. Streams are
-  -- cancelled on script reload. Requires plugin_api >= 4. Returns nil when the
-  -- stream could not be started.
+  --- Long-lived streaming request (e.g. SSE). onLine fires per received line (CR
+  --- trimmed); onClose fires exactly once when the transfer ends, unless the
+  --- stream was stopped via the handle. Non-2xx responses are not special-cased:
+  --- their body streams to onLine and the status arrives in onClose. Streams are
+  --- cancelled on script reload. Requires plugin_api >= 4. Returns nil when the
+  --- stream could not be started.
   httpStream: (
     req: HttpRequest,
     onLine: (line: string) -> (),
@@ -184,7 +192,8 @@ export type Noctalia = {
   ) -> HttpStreamHandle?,
   download: (url: string, destPath: string, onDone: (success: boolean) -> ()) -> boolean,
 
-  fuzzyScore: (pattern: string, text: string) -> number?, -- nil if no match
+  --- returns nil if no match
+  fuzzyScore: (pattern: string, text: string) -> number?,
 
   getConfig: (key: string) -> any, -- string | number | boolean | {string} | nil
 
@@ -195,7 +204,7 @@ export type Noctalia = {
 
 declare noctalia: Noctalia
 
--- One node of a declarative ui.* control tree (bar widgets, desktop widgets, panels).
+--- One node of a declarative ui.* control tree (bar widgets, desktop widgets, panels).
 export type UiNode = {
   type: string,
   props: { [string]: any },
@@ -210,19 +219,19 @@ declare barWidget: {
   setImage: (path: string, watch: boolean?, width: number?, height: number?) -> (),
   setTooltip: (tooltip: (string | TooltipRow | { TooltipRow })?) -> (),
   clearTooltip: () -> (),
-  -- family: a font family name (load a file first with noctalia.loadFont).
-  -- baseline: "text" (default) | "textFixedHeight" | "inkCentered" | "pictographic"
-  -- ("pictographic" centers art/icon fonts anchored at the ink top, e.g. bongocat).
+  --- family: a font family name (load a file first with noctalia.loadFont).
+  --- baseline: "text" (default) | "textFixedHeight" | "inkCentered" | "pictographic"
+  --- ("pictographic" centers art/icon fonts anchored at the ink top, e.g. bongocat).
   setFont: (family: string, baseline: string?) -> (),
   setColor: (role: string, mode: string?) -> (),
   setGlyphColor: (role: string, mode: string?) -> (),
   isVertical: () -> boolean,
-  -- Connector name of the output this widget instance's bar is on (nil when
-  -- unknown). Per-instance, unlike noctalia.focusedOutputName().
+  --- Connector name of the output this widget instance's bar is on (nil when
+  --- unknown). Per-instance, unlike noctalia.focusedOutputName().
   outputName: () -> string?,
   setVisible: (visible: boolean) -> (),
-  -- Declarative alternative to setText/setGlyph: the tree replaces the built-in
-  -- glyph/text row. ui.input/ui.select/ui.scroll are not supported in the bar.
+  --- Declarative alternative to setText/setGlyph: the tree replaces the built-in
+  --- glyph/text row. ui.input/ui.select/ui.scroll are not supported in the bar.
   render: (tree: UiNode) -> (),
 }
 
